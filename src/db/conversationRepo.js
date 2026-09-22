@@ -74,10 +74,11 @@ async function listQueue() {
     `SELECT c.id, c.whatsapp_number, c.status, c.assumed_by, c.updated_at,
             h.motivo, h.resumo, h.urgencia, h.created_at AS handoff_at
      FROM conversations c
-     JOIN LATERAL (
-       SELECT * FROM handoffs WHERE conversation_id = c.id
-       ORDER BY created_at DESC LIMIT 1
-     ) h ON true
+     JOIN (
+       SELECT DISTINCT ON (conversation_id) *
+       FROM handoffs
+       ORDER BY conversation_id, created_at DESC
+     ) h ON h.conversation_id = c.id
      WHERE c.status = 'human' AND c.assumed_by IS NULL
      ORDER BY h.urgencia DESC, h.created_at ASC`
   );
